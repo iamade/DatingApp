@@ -10,7 +10,7 @@ import { NgForm } from '@angular/forms';
   styleUrls: ['./member-edit.component.css']
 })
 export class MemberEditComponent implements OnInit {
-  @ViewChild('editForm') editForm: NgForm;
+  @ViewChild('editForm', {static: true}) editForm: NgForm;
   user: User;
 
   constructor(private route: ActivatedRoute, private alertify: AlertifyService) { }

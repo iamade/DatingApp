@@ -1,3 +1,4 @@
+import { ListResolver } from './_resolvers/lists.resolver';
 import { PreventUnsavedChanges } from './_guards/prevent-unsaved-changes.guard';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import { MemberEditComponent } from './members/member-edit/member-edit.component';
@@ -90,6 +91,7 @@ export class CustomHammerConfig extends HammerGestureConfig {
       MemberDetailResolver,
       MemberListResolver,
       MemberEditResolver,
+      ListResolver,
       PreventUnsavedChanges,
       {provide: HAMMER_GESTURE_CONFIG, useClass: CustomHammerConfig}
    ],

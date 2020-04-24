@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 
 namespace DatingApp.API
@@ -25,15 +26,40 @@ namespace DatingApp.API
 
         public IConfiguration Configuration { get; }
 
+        public void ConfigureDevelopmentServices(IServiceCollection services)
+        {
+             services.AddDbContext<DataContext>(x => {
+                 x.UseLazyLoadingProxies();
+                 x.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
+             });
+           
+             ConfigureServices(services);
+        }
+
+          public void ConfigureProductionServices(IServiceCollection services)
+        {
+             services.AddDbContext<DataContext>(x => {
+                 x.UseLazyLoadingProxies();
+                 x.UseMySql(Configuration.GetConnectionString("DefaultConnection"));
+             });
+           
+             ConfigureServices(services);
+        }
+
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
-                .AddJsonOptions(opt => {
-                    opt.SerializerSettings.ReferenceLoopHandling = 
-                        Newtonsoft.Json.ReferenceLoopHandling.Ignore;
-                });
+            services.AddControllers().AddNewtonsoftJson(opt => 
+            {
+                opt.SerializerSettings.ReferenceLoopHandling = 
+                Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+            });
+        
+            // services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
+            //     .AddJsonOptions(opt => {
+            //         opt.SerializerSettings.ReferenceLoopHandling = 
+            //             Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+            //     });
             services.AddCors();
             services.Configure<CloudinarySettings>(Configuration.GetSection("CloudinarySettings"));
             services.AddAutoMapper(typeof(DatingRepository).Assembly);
@@ -56,7 +82,7 @@ namespace DatingApp.API
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, Seed seeder)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, Seed seeder)
         {
             if (env.IsDevelopment())
             {
@@ -82,9 +108,19 @@ namespace DatingApp.API
 
            // app.UseHttpsRedirection();
            //seeder.SeedUsers();
-           app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+           app.UseRouting();
            app.UseAuthentication();
-           app.UseMvc();
+           app.UseAuthorization();
+           
+           app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+           app.UseDefaultFiles();
+           app.UseStaticFiles();
+           app.UseEndpoints(endpoints => {
+               endpoints.MapControllers();
+               endpoints.MapFallbackToController("Index", "Fallback");
+           });
+           
+          // app.UseMvc();
         }
     }
 }
